@@ -17,7 +17,7 @@ new="${ESCALATION%.xlsx}_CMT_ご返答.xlsx"
 
 # Copy renamed file to downloads
 cp  "$DEST_DIR/$new" "$DOWNLD"
-zip_name="${new%.xls}.zip"
+zip_name="${new%.xlsx}.zip"
 zip -P "$PASSWORD" "$zip_name" "$new"
 
 echo "✅ Escalation file copied and zipped $zip_name"
