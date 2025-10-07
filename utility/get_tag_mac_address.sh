@@ -2,4 +2,4 @@
 
 ESCALATION=${1:?Usage $0 <csv_file>}
 
-rg '車載器NO.' "$ESCALATON" | awk -F',' '{print $2}' | pbcopy
+rg '車載器NO.' "$ESCALATION" | awk -F',' '{print $2}' | pbcopy
