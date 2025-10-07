@@ -1,0 +1,2 @@
+--query for checking the status of tags 
+with df1 as (select thr.tag_mac_address, thr.company, sum(case when tsl.uploadtime is not null then 1 else 0 end) as status_count, sum(case when vt.modification_date is not null then 1 else 0 end)as history_count from tag_hardware_register thr left join tag_status_latest tsl on thr.tag_mac_address=tsl.tag_mac_address left join vehicle_tags vt on thr.tag_mac_address=vt.tag_mac_address where thr.tag_mac_address in (:list) group by 1,2) select * from df1 where status_count>0 or history_count>0;
