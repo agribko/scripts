@@ -42,6 +42,16 @@ BATTERY_STATUS=$(
     || echo "BATTERY OPTIMISATION OFF"
 )
 
+POWER_SAVE=$(
+  rg -q 'powerSave=true' -- "$LOG_FILE" \
+    && echo "POWER SAVE ON" \
+    || echo "POWER SAVE OFF"
+)
+BG_RESTRICTED=$(
+  rg -q 'bgRestricted=true' -- "$LOG_FILE" \
+    && echo "BACKGROUND RESTRICTED ON" \
+    || echo "BACKGROUND RESTRICTED OFF"
+)
 #LOW_MEMORY_COUNT=$(rg -c 'LOW MEMORY' -- $LOG_FILE || true)
 LOW_MEMORY_COUNT=$(rg 'last_process_exit_reason' $LOG_FILE | awk -F'=' '{ split($3,a,","); print a[1]}' | sort | uniq -c)
 TRIM_MEMORY_COUNT=$(rg -c 'TRIM' -- $LOG_FILE || echo 0)
@@ -58,6 +68,8 @@ center_text "Log ends at:   ${YELLOW}${END_TS}${RESET}"
 printf "\n"
 
 center_text "Battery status: ${BATTERY_STATUS}"
+center_text "${POWER_SAVE}"
+center_text "${BG_RESTRICTED}"
 center_text "TRIM MEMORY: ${RED}${TRIM_MEMORY_COUNT}${RESET}"
 center_text "BTLE TIMEOUT: ${RED}${BTLE_TIMEOUT_COUNT}${RESET}"
 center_text "GPS FAILURE: ${RED}${GPS_FAILURE_COUNT}${RESET}"
