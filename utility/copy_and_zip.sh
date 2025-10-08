@@ -6,7 +6,7 @@ ESCALATION=${2:?Usage: $0 <ticket_number> <escalation_file> <zip_password>}
 PASSWORD=${3:?Usage: $0 <ticket_number> <escalation_file> <zip_password>}
 
 # Destination directory 
-DEST_DIR="/Users/agribko/Google Drive/Shared drives/CMT Customers/Aioi/09 - Escalation/Escalation_List/Escalation_issues_by_2025_10_07/Zen-${TICKET}"
+DEST_DIR="/Users/agribko/Google Drive/Shared drives/CMT Customers/Aioi/09 - Escalation/Escalation_List/Escalation_issues_by_2025_11_11/Zen-${TICKET}"
 DOWNLD="/Users/agribko/Downloads"
 
 # Go to Downloads
