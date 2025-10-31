@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+CMD_STASH_FILE="${CMD_STASH_FILE:-$HOME/.cmd_stash}"
+
+cmd="$*"
+[[ -z "$cmd" ]] && exit 0
+
+id="$(date +%s).$$.$RANDOM"
+ts="$(date +%F' '%T)"
+
+printf '%s\t%s\t%s\n' "$id" "$ts" "$cmd" >> "$CMD_STASH_FILE"

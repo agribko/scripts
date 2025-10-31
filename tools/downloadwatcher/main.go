@@ -16,8 +16,7 @@ import (
 
 var (
 	dir        = flag.String("dir", os.Getenv("HOME")+"/Downloads", "Directory to watch")
-	script1    = flag.String("script1", "/Users/agribko/scripts/utility/copy_to_gdrive.sh", "First script")
-	script2    = flag.String("script2", "/Users/agribko/scripts/utility/convert_xlsx_to_csv.sh", "Second script")
+	script    = flag.String("script", "/Users/agribko/scripts/utility/process_download.sh", "First script")
 	minSize    = flag.Int64("minsize", 1<<10, "Minimum size (bytes) to consider file 'real'")
 	quietDelay = flag.Duration("settle", 750*time.Millisecond, "Delay to let file settle before processing")
 )
@@ -48,15 +47,9 @@ func runScripts(path, ticket string) error {
  base := filepath.Base(path)
 
     // script1 ticket + filename
-    if _, err := os.Stat(*script1); err == nil {
-        if err := exec.Command("/bin/bash", *script1, ticket, base).Run(); err != nil {
-            return fmt.Errorf("script1: %w", err)
-        }
-    }
-    // script2 filename only
-    if _, err := os.Stat(*script2); err == nil {
-        if err := exec.Command("/bin/bash", *script2, base).Run(); err != nil {
-            return fmt.Errorf("script2: %w", err)
+    if _, err := os.Stat(*script); err == nil {
+        if err := exec.Command("/bin/zsh", *script, ticket, base).Run(); err != nil {
+            return fmt.Errorf("script: %w", err)
         }
     }
     return nil
