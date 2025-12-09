@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 
+source /Users/agribko/fzfstash.zsh
 TICKET=${1:?Usage $0 <ticket> <file>}
 ESCL_IN=${2:?Usage $0 <ticket> <file>}
 
@@ -11,4 +12,7 @@ STASH="$HOME/bin/stash"
 /Users/agribko/scripts/utility/copy_to_gdrive.sh "$TICKET" "$ESCL"
 /Users/agribko/scripts/utility/convert_xlsx_to_csv.sh "$ESCL"
 
-$STASH "copyandzip '$TICKET' '$ESCL' MSAD"
+
+# Stash handy actions (quote safely)
+STASH="${STASH:-$HOME/bin/stash}"
+"$STASH" "copyandzip '$TICKET' '$ESCL_IN' MSAD"

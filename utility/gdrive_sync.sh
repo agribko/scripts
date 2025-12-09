@@ -4,17 +4,17 @@ shopt -s nullglob
 
 cd /Users/agribko/gdrive
 
-rclone copy "gdrive:テンプレート/" ./
+# rclone copy "gdrive:テンプレート/" ./
 
-mkdir -p templates
+#mkdir -p templates
 
-for file in *.docx; do
+for file in *.txt; do
     [ -f "$file" ] || continue
 
     echo "--- Processing: $file ---"
 
-    base=$(basename "$file" .docx)
-    docx2txt.sh "$file"
+    base=$(basename "$file" .txt)
+    #docx2txt.sh "$file"
 
     txtfile="${base}.txt"
 
