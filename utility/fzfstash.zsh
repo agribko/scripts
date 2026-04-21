@@ -1,21 +1,20 @@
-# ---- Command Stash (zsh + fzf) ---------------------------------------------
-# deps: fzf; optional: tac (coreutils). zsh's `tac` alias below covers macOS.
-# file format (TSV): ID \t ISO_TIMESTAMP \t COMMAND
-
 export CMD_STASH_FILE="${CMD_STASH_FILE:-$HOME/.cmd_stash}"
 [[ -e "$CMD_STASH_FILE" ]] || : > "$CMD_STASH_FILE"
 
-# macOS doesn't ship tac; use tail -r as a fallback
-command -v tac >/dev/null 2>&1 || alias tac='tail -r'
+# default tray name (can override per-session)
+export CMD_STASH_TRAY="${CMD_STASH_TRAY:-main}"
 
-# Generate a reasonably unique ID (epochseconds.pid.rand)
+# Generate a reasonably unique ID
 _stash_gen_id() {
-  printf '%s.%s.%s' "$(date +%s)" "$$" "$RANDOM"
+  if [[ -n ${EPOCHREALTIME-} ]]; then
+    printf '%s.%s.%s' "${EPOCHREALTIME//./}" "$$" "$RANDOM"
+  else
+    printf '%s.%s.%s' "$(date +%s)" "$$" "$RANDOM"
+  fi
 }
-# --- utilities ---------------------------------------------------------------
+
 # quick status message without polluting the prompt line
 _stash_status() {
-  # Prefer ZLE status line; fall back to echo if not in ZLE context
   if zle >/dev/null 2>&1; then
     zle -M -- "$*"
   else
@@ -23,9 +22,84 @@ _stash_status() {
   fi
 }
 
-# --- stash the CURRENT command line (Ctrl-S) ---------------------------------
+# one tray -> formatted picker input
+# order is OLD -> NEW because we read the file as-is
+_stash_entries_for_tray() {
+  local tray="$1"
+  [[ -n "$tray" && -s "$CMD_STASH_FILE" ]] || return 1
+
+  awk -F'\t' -v tray="$tray" '
+    NF >= 4 && $3 == tray {
+      cmd = $0
+      sub(/^[^\t]*\t[^\t]*\t[^\t]*\t/, "", cmd)
+      printf "%s\t%s | %s\n", $1, $2, cmd
+    }
+  ' "$CMD_STASH_FILE"
+}
+
+# single-select picker
+# +m keeps multiselect OFF even if FZF_DEFAULT_OPTS ever contains --multi
+# --accept-nth=1 returns only the ID
+_stash_choose_one_in_tray() {
+  local tray="$1"; shift
+  _stash_entries_for_tray "$tray" |
+    fzf +m \
+      --scheme=history \
+      --no-sort \
+      --delimiter=$'\t' \
+      --with-nth=2 \
+      --accept-nth=1 \
+      --prompt="stash[$tray]> " \
+      --bind='tab:down,btab:up' \
+      "$@"
+}
+
+# multi-select picker, only for bulk operations
+# returns one selected ID per line
+_stash_choose_many_in_tray() {
+  local tray="$1"; shift
+  _stash_entries_for_tray "$tray" |
+    fzf -m \
+      --scheme=history \
+      --no-sort \
+      --delimiter=$'\t' \
+      --with-nth=2 \
+      --accept-nth=1 \
+      --prompt="stash[$tray]> " \
+      --bind='tab:toggle+down,btab:toggle+up,ctrl-a:select-all,ctrl-x:deselect-all' \
+      "$@"
+}
+
+# append one command line to stash file
+_stash_append() {
+  local quiet=0
+  if [[ $1 == --quiet ]]; then
+    quiet=1
+    shift
+  fi
+
+  local tray="${CMD_STASH_TRAY:-main}"
+  local line="$*"
+  [[ -z "$line" ]] && {
+    (( quiet )) || print -r -- "Nothing to stash."
+    return 1
+  }
+
+  # keep the TSV file one-record-per-line and four columns wide
+  line=${line//$'\t'/    }
+  line=${line//$'\n'/'; '}
+
+  local id ts
+  id="$(_stash_gen_id)"
+  ts="$(date +%F' '%T)"
+
+  printf '%s\t%s\t%s\t%s\n' "$id" "$ts" "$tray" "$line" >> "$CMD_STASH_FILE"
+
+  (( quiet )) || print -r -- "Stashed: [$ts][$tray] $line"
+}
+
+# stash the CURRENT command line (Ctrl-S)
 stash-add-buffer-widget() {
-  # Compose current line safely
   local line="${LBUFFER}${RBUFFER}"
 
   if [[ -z "$line" ]]; then
@@ -33,140 +107,205 @@ stash-add-buffer-widget() {
     return 0
   fi
 
-  # Append to file (real tabs)
-  local id ts
-  id="$(_stash_gen_id)"
-  ts="$(date +%F' '%T)"
-  printf '%s\t%s\t%s\n' "$id" "$ts" "$line" >> "$CMD_STASH_FILE"
+  _stash_append --quiet "$line" || {
+    _stash_status "Stash: failed to stash command"
+    zle redisplay
+    return 1
+  }
 
-  # Clear the user’s command line so nothing remains to accidentally run
   LBUFFER=""
   RBUFFER=""
   CURSOR=0
 
-  # Show a transient status message, then redraw the clean prompt
-  _stash_status "Stashed at $ts"
+  _stash_status "Stashed to tray: ${CMD_STASH_TRAY:-main}"
   zle redisplay
 }
 zle -N stash-add-buffer-widget
-bindkey '^s' stash-add-buffer-widget   # Ctrl-S
+bindkey '^s' stash-add-buffer-widget
 
-# --- pick from stash and insert into prompt (Ctrl-G) -------------------------
+# choose a tray
+_stash_choose_tray() {
+  [[ ! -s "$CMD_STASH_FILE" ]] && return 1
+
+  local -a trays
+  trays=("${(@f)$(awk -F'\t' 'NF>=4 {print $3}' "$CMD_STASH_FILE" | sort -u)}")
+  (( ${#trays[@]} )) || return 1
+
+  if (( ${#trays[@]} == 1 )); then
+    print -r -- "$trays[1]"
+    return 0
+  fi
+
+  print -l -- "${trays[@]}" | fzf --prompt='tray> ' --no-sort
+}
+
+# lookup a command by ID from the stash file
+_stash_cmd_by_id() {
+  local id="$1"
+  awk -F'\t' -v id="$id" '
+    NF>=4 && $1==id {
+      print substr($0, index($0,$4))
+      exit
+    }
+  ' "$CMD_STASH_FILE"
+}
+
+# pick from stash and insert into prompt (Ctrl-G)
 stash-pick-widget() {
-  # Tell ZLE to release the terminal BEFORE launching fzf (prevents “hang/subshell” feel)
   zle -I
 
-  # Run the chooser in normal TTY mode
-  local sel id cmd
-  sel="$(_stash_choose)" || { _stash_status "Stash: canceled"; zle redisplay; return 1; }
-  id="${sel%%$'\t'*}"
-  cmd="$(awk -F'\t' -v id="$id" '$1==id {print substr($0, index($0,$3))}' "$CMD_STASH_FILE")" || true
+  local tray id cmd
 
-  # If nothing found, just restore prompt
-  [[ -z "$cmd" ]] && { _stash_status "Stash: empty selection"; zle redisplay; return 1; }
+  tray="$(_stash_choose_tray)" || {
+    _stash_status "Stash: tray selection canceled"
+    zle redisplay
+    return 1
+  }
 
-  # Replace the current prompt buffer with the picked command (not executed)
+  id="$(_stash_choose_one_in_tray "$tray")" || {
+    _stash_status "Stash: command selection canceled"
+    zle redisplay
+    return 1
+  }
+
+  cmd="$(_stash_cmd_by_id "$id")" || true
+
+  [[ -z "$cmd" ]] && {
+    _stash_status "Stash: empty selection"
+    zle redisplay
+    return 1
+  }
+
   BUFFER="$cmd"
   CURSOR=${#BUFFER}
-  _stash_status "Inserted from stash"
+  _stash_status "Inserted from tray: $tray"
   zle redisplay
 }
 zle -N stash-pick-widget
-bindkey '^g' stash-pick-widget         # Ctrl-G
-# Core: append one command line to stash file
-_stash_append() {
-  local line="$*"
-  [[ -z "$line" ]] && { print -r -- "Nothing to stash."; return 1; }
-  local id ts
-  id="$(_stash_gen_id)"
-  ts="$(date +%F' '%T)"
-  printf '%s\t%s\t%s\n' "$id" "$ts" "$line" >> "$CMD_STASH_FILE"
-  print -r -- "Stashed: [$ts] $line"
-}
+bindkey '^g' stash-pick-widget
 
-# Public: stash ad-hoc text you pass as args
-# usage: sa "psql --csv -f get_device_log.sql"
+# Public CLI helpers
+
 stash-add() {
   _stash_append "$@"
 }
 
-
-# FZF chooser (latest first). Shows "timestamp | command"
+# two-step chooser, returns only the selected ID
 _stash_choose() {
-  tac "$CMD_STASH_FILE" 2>/dev/null \
-    | awk -F'\t' 'NF>=3 {print $1 "\t" $2 " | " substr($0, index($0,$3))}' \
-    | fzf +m --prompt='stash> ' --no-sort --tac --with-nth=2..   # +m == --no-multi
+  local tray id
+  tray="$(_stash_choose_tray)" || return 1
+  id="$(_stash_choose_one_in_tray "$tray" "$@")" || return 1
+  print -r -- "$id"
 }
 
-# Insert picked command into the prompt (editable; not executed)
+# if called from a widget, insert into the buffer
+# if called as a normal shell command, print the command
 stash-pick() {
-  local sel id cmd
-  sel="$(_stash_choose)" || return 1
-  id="${sel%%$'\t'*}"
-  cmd="$(awk -F'\t' -v id="$id" '$1==id {print substr($0, index($0,$3))}' "$CMD_STASH_FILE")"
-  [[ -n "$cmd" ]] && zle -U -- "$cmd"
+  local id cmd
+  id="$(_stash_choose)" || return 1
+  cmd="$(_stash_cmd_by_id "$id")"
+  [[ -z "$cmd" ]] && return 1
+
+  if zle >/dev/null 2>&1; then
+    zle -U -- "$cmd"
+  else
+    print -r -- "$cmd"
+  fi
 }
 
-# Pick and run immediately
 stash-run() {
-  local sel id cmd
-  sel="$(_stash_choose)" || return 1
-  id="${sel%%$'\t'*}"
-  cmd="$(awk -F'\t' -v id="$id" '$1==id {print substr($0, index($0,$3))}' "$CMD_STASH_FILE")"
+  local id cmd
+  id="$(_stash_choose)" || return 1
+  cmd="$(_stash_cmd_by_id "$id")"
   [[ -z "$cmd" ]] && return 1
   print -r -- "+ $cmd"
   eval "$cmd"
 }
 
-# Remove one or many stashed items (multi-select)
+# Remove one or many stashed items
 stash-rm() {
-  local selections ids tmp
-  selections="$(_stash_choose --multi)" || return 1
-  ids="$(print -r -- "$selections" | awk -F'\t' '{print $1}')"
-  [[ -z "$ids" ]] && return 0
+  local tray tmp
+  local -a ids
 
-  tmp="$(mktemp)"
+  tray="$(_stash_choose_tray)" || return 1
+  ids=("${(@f)$(_stash_choose_many_in_tray "$tray")}") || return 1
+  (( ${#ids[@]} )) || return 0
+
+  tmp="$(mktemp)" || return 1
   awk -F'\t' 'BEGIN{OFS=FS}
-    NR==FNR {del[$1]=1; next}
+    NR==FNR { del[$1]=1; next }
     !($1 in del)
-  ' <(print -r -- "$ids") "$CMD_STASH_FILE" > "$tmp" && mv "$tmp" "$CMD_STASH_FILE"
-  print -r -- "Removed $(print -r -- "$ids" | wc -l | tr -d ' ') item(s) from stash."
+  ' <(printf '%s\n' "${ids[@]}") "$CMD_STASH_FILE" > "$tmp" && mv "$tmp" "$CMD_STASH_FILE"
+
+  print -r -- "Removed ${#ids[@]} item(s) from tray: $tray."
 }
 
-# Remove ALL entries from the stash (with confirmation and backup)
+# Remove ALL entries from the stash
 stash-clear() {
   local file="${CMD_STASH_FILE:-$HOME/.cmd_stash}"
-  [[ ! -e "$file" || ! -s "$file" ]] && { print -r -- "Stash is already empty."; return 0; }
-
-  local count; count=$(wc -l <"$file" | tr -d ' ')
-  # Confirm (press 'y' to proceed)
-  read -q "REPLY?Delete ALL $count stashed item(s)? [y/N] " || { echo; print -r -- "Aborted."; return 1; }
-  echo
-
-  # Optional: backup before clearing
-  local bak="${file}.bak.$(date +%Y%m%d-%H%M%S)"
-  cp -p -- "$file" "$bak" 2>/dev/null || cp -- "$file" "$bak" 2>/dev/null || true
-
-  # Atomically truncate with a lock (prevents races)
-  {
-    exec {__fd}>>"$file"
-    command -v flock >/dev/null 2>&1 && flock -x "$__fd" || true
-    : >| "$file"
+  [[ ! -e "$file" || ! -s "$file" ]] && {
+    print -r -- "Stash is already empty."
+    return 0
   }
 
-  print -r -- "Cleared $count item(s). Backup: $bak"
+  local count
+  count=$(wc -l <"$file" | tr -d ' ')
+
+  read -q "REPLY?Delete ALL $count stashed item(s)? [y/N] " || {
+    echo
+    print -r -- "Aborted."
+    return 1
+  }
+  echo
+
+  local __fd
+  exec {__fd}>>"$file"
+  command -v flock >/dev/null 2>&1 && flock -x "$__fd" || true
+  : >| "$file"
+  exec {__fd}>&-
+
+  print -r -- "Cleared $count item(s)"
 }
 
-# List stash (human-readable)
 stash-list() {
-  awk -F'\t' 'NF>=3 {printf "%s | %s\n", $2, substr($0, index($0,$3))}' "$CMD_STASH_FILE"
+  [[ ! -s "$CMD_STASH_FILE" ]] && {
+    print -r -- "Stash is empty."
+    return 0
+  }
+
+  awk -F'\t' '
+    NF>=4 {
+      cmd = substr($0, index($0,$4))
+      printf "[%s] %s | %s\n", $3, $2, cmd
+    }
+  ' "$CMD_STASH_FILE"
 }
 
-# Friendly aliases (optional)
-alias sa='stash-add'   # sa "command here"
-alias sp='stash-pick'  # Ctrl-G does the same
+stash-migrate-old() {
+  local file="${CMD_STASH_FILE:-$HOME/.cmd_stash}"
+  [[ ! -e "$file" || ! -s "$file" ]] && {
+    print -r -- "Nothing to migrate."
+    return 0
+  }
+
+  local tray="${CMD_STASH_TRAY:-main}"
+  local tmp
+  tmp="$(mktemp)"
+
+  awk -F'\t' -v tray="$tray" 'BEGIN{OFS=FS}
+    NF==3 {
+      print $1, $2, tray, $3
+      next
+    }
+    {print}
+  ' "$file" > "$tmp" && mv "$tmp" "$file"
+
+  print -r -- "Migration complete. Old entries tagged with tray: $tray"
+}
+
+alias sa='stash-add'
+alias sp='stash-pick'
 alias sr='stash-run'
 alias srm='stash-rm'
 alias sl='stash-list'
-alias sclear='stash-clear' # clear the stash list
-# ---------------------------------------------------------------------------
+alias sclear='stash-clear'

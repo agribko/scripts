@@ -11,6 +11,8 @@ ssconvert "$ESCALATION" "$CSV"
 base=$(basename $ESCALATION)
 EXTRACTED=$(echo "$base" | grep -oE '【[^】]*】' | grep -oE 'S[0-9_]+').csv || true
 
+#export CMD_STASH_TRAY="$EXTRACTED"
+
 LINK="$HOME/Downloads/$EXTRACTED"
 
 ln -sf "$CSV" "$LINK"
