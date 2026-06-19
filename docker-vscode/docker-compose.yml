@@ -1,0 +1,18 @@
+services:
+  code-server:
+    build: .
+    container_name: vscode-tmc
+    ports:
+      - "8080:8080"
+    environment:
+      - PASSWORD=tmc
+    volumes:
+      - coder-config:/home/coder/.config
+      - coder-data:/home/coder/.local/share
+    command: >
+      --bind-addr 0.0.0.0:8080
+      --auth password
+
+volumes:
+  coder-config:
+  coder-data:
