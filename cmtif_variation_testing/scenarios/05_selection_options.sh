@@ -41,7 +41,8 @@ EOF
         local payload=$(cat <<EOF
   {
     "short_vehicle_id": ${SHORT_VEHICLE_ID_05},
-    "eco_class": "${eco_class}"
+    "eco_class": "${eco_class}",
+    "fleet_id": ${FLEET_ID}
   }
 EOF
 )
@@ -57,7 +58,8 @@ EOF
         local payload=$(cat <<EOF
   {
     "short_vehicle_id": ${SHORT_VEHICLE_ID_05},
-    "fuel_type": "${fuel_type}"
+    "fuel_type": "${fuel_type}",
+    "fleet_id": ${FLEET_ID}
   }
 EOF
 )

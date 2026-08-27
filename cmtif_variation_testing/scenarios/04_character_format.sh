@@ -57,7 +57,12 @@ EOF
     local user_update_payload=$(cat <<EOF
   {
     "short_user_id": ${SHORT_USER_ID_04},
-    "name_secondary": "${name_secondary_updated}"
+    "name_primary": "田中花子",
+    "name_secondary": "${name_secondary_updated}",
+    "mail": "format.test@example.com",
+    "phone_number": "${phone_digits_only}",
+    "fleet_id": ${FLEET_ID},
+    "team_id": ${TEAM_ID}
   }
 EOF
 )
@@ -95,7 +100,8 @@ EOF
     local vehicle_update_payload=$(cat <<EOF
   {
     "short_vehicle_id": ${SHORT_VEHICLE_ID_04},
-    "registration": "${registration_updated}"
+    "registration": "${registration_updated}",
+    "fleet_id": ${FLEET_ID}
   }
 EOF
 )
