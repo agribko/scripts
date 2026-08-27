@@ -14,7 +14,6 @@ run_scenario() {
         log_step $step "user_update - Register user (required fields only)"
 
         local user_register_payload=$(cat <<EOF
-[
   {
     "short_user_id": ${SHORT_USER_ID_01},
     "name_primary": "テスト太郎",
@@ -24,7 +23,6 @@ run_scenario() {
     "fleet_id": ${FLEET_ID},
     "team_id": ${TEAM_ID}
   }
-]
 EOF
 )
         call_api "POST" "/user_update" "$user_register_payload"
@@ -38,12 +36,10 @@ EOF
     log_step $step "user_update - Update user (required fields only)"
 
     local user_update_payload=$(cat <<EOF
-[
   {
     "short_user_id": ${SHORT_USER_ID_01},
     "name_primary": "テスト次郎"
   }
-]
 EOF
 )
     call_api "POST" "/user_update" "$user_update_payload"
@@ -55,13 +51,11 @@ EOF
         log_step $step "vehicle_update - Register vehicle (required fields only)"
 
         local vehicle_register_payload=$(cat <<EOF
-[
   {
     "short_vehicle_id": ${SHORT_VEHICLE_ID_01},
     "registration": "品川|500|あ|9999",
     "fleet_id": ${FLEET_ID}
   }
-]
 EOF
 )
         call_api "POST" "/vehicle_update" "$vehicle_register_payload"
@@ -75,12 +69,10 @@ EOF
     log_step $step "vehicle_update - Update vehicle (required fields only)"
 
     local vehicle_update_payload=$(cat <<EOF
-[
   {
     "short_vehicle_id": ${SHORT_VEHICLE_ID_01},
     "registration": "大阪|300|い|8888"
   }
-]
 EOF
 )
     call_api "POST" "/vehicle_update" "$vehicle_update_payload"
@@ -91,12 +83,10 @@ EOF
     log_step $step "drive_update - Link drive to user (required fields only)"
 
     local drive_update_payload=$(cat <<EOF
-[
   {
     "drive_id": "${DRIVE_ID_01}",
     "short_user_id": ${SHORT_USER_ID_01}
   }
-]
 EOF
 )
     call_api "POST" "/drive_update" "$drive_update_payload"

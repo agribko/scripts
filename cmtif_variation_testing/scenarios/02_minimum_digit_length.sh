@@ -18,7 +18,6 @@ run_scenario() {
         log_step $step "user_update - Register user (min 9-digit short_user_id)"
 
         local user_register_payload=$(cat <<EOF
-[
   {
     "short_user_id": ${SHORT_USER_ID_02},
     "name_primary": "最小太郎",
@@ -28,7 +27,6 @@ run_scenario() {
     "fleet_id": ${FLEET_ID},
     "team_id": ${TEAM_ID}
   }
-]
 EOF
 )
         call_api "POST" "/user_update" "$user_register_payload"
@@ -42,12 +40,10 @@ EOF
     log_step $step "user_update - Update user (min 9-digit short_user_id)"
 
     local user_update_payload=$(cat <<EOF
-[
   {
     "short_user_id": ${SHORT_USER_ID_02},
     "name_primary": "最小次郎"
   }
-]
 EOF
 )
     call_api "POST" "/user_update" "$user_update_payload"
@@ -59,13 +55,11 @@ EOF
         log_step $step "vehicle_update - Register vehicle (min 9-digit short_vehicle_id)"
 
         local vehicle_register_payload=$(cat <<EOF
-[
   {
     "short_vehicle_id": ${SHORT_VEHICLE_ID_02},
     "registration": "東京|100|う|0001",
     "fleet_id": ${FLEET_ID}
   }
-]
 EOF
 )
         call_api "POST" "/vehicle_update" "$vehicle_register_payload"
@@ -79,12 +73,10 @@ EOF
     log_step $step "vehicle_update - Update vehicle (min 9-digit short_vehicle_id)"
 
     local vehicle_update_payload=$(cat <<EOF
-[
   {
     "short_vehicle_id": ${SHORT_VEHICLE_ID_02},
     "registration": "東京|100|う|0002"
   }
-]
 EOF
 )
     call_api "POST" "/vehicle_update" "$vehicle_update_payload"
@@ -95,12 +87,10 @@ EOF
     log_step $step "drive_update - Link drive to user (min-length drive_id=36 chars, short_user_id=9 digits)"
 
     local drive_link_payload=$(cat <<EOF
-[
   {
     "drive_id": "${DRIVE_ID_02}",
     "short_user_id": ${SHORT_USER_ID_02}
   }
-]
 EOF
 )
     call_api "POST" "/drive_update" "$drive_link_payload"
@@ -111,12 +101,10 @@ EOF
     log_step $step "drive_update - Unlink drive (short_user_id=0, min 1 digit)"
 
     local drive_unlink_payload=$(cat <<EOF
-[
   {
     "drive_id": "${DRIVE_ID_02}",
     "short_user_id": 0
   }
-]
 EOF
 )
     call_api "POST" "/drive_update" "$drive_unlink_payload"

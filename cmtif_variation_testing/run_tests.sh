@@ -70,11 +70,12 @@ call_api() {
     local payload="$3"
     local url="${BASE_URL}${endpoint}"
 
-    local compact_payload
-    compact_payload=$(echo "$payload" | jq -c '.')
+    local payload_file
+    payload_file=$(mktemp)
+    echo "$payload" | jq -e '.' > "$payload_file"
 
     log_info "Request: ${method} ${url}"
-    log_info "Payload: ${compact_payload}"
+    log_info "Payload: $(cat "$payload_file")"
 
     local tmp_file
     tmp_file=$(mktemp)
@@ -84,11 +85,11 @@ call_api() {
         -H "x-api-key: ${API_KEY}" \
         -H "Content-Type: application/json" \
         -H "Accept: application/json" \
-        -d "$compact_payload" \
+        -d @"$payload_file" \
         "$url")
 
     RESPONSE_BODY=$(cat "$tmp_file")
-    rm -f "$tmp_file"
+    rm -f "$tmp_file" "$payload_file"
 
     log_info "HTTP Status: ${HTTP_CODE}"
     log_info "Response: ${RESPONSE_BODY}"

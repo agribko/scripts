@@ -33,7 +33,6 @@ run_scenario() {
         log_info "policy_number length: ${#policy_10}"
 
         local user_register_payload=$(cat <<EOF
-[
   {
     "short_user_id": ${SHORT_USER_ID_03},
     "name_primary": "${name_primary_50}",
@@ -44,7 +43,6 @@ run_scenario() {
     "fleet_id": ${FLEET_ID},
     "team_id": ${TEAM_ID}
   }
-]
 EOF
 )
         call_api "POST" "/user_update" "$user_register_payload"
@@ -60,12 +58,10 @@ EOF
     local name_primary_50_updated="カキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンアイウエオイロハニ"
 
     local user_update_payload=$(cat <<EOF
-[
   {
     "short_user_id": ${SHORT_USER_ID_03},
     "name_primary": "${name_primary_50_updated}"
   }
-]
 EOF
 )
     call_api "POST" "/user_update" "$user_update_payload"
@@ -80,7 +76,6 @@ EOF
         log_info "tag_mac_address length: ${#tag_mac}"
 
         local vehicle_register_payload=$(cat <<EOF
-[
   {
     "short_vehicle_id": ${SHORT_VEHICLE_ID_03},
     "registration": "${registration_32}",
@@ -88,7 +83,6 @@ EOF
     "tag_mac_address": "${tag_mac}",
     "fleet_id": ${FLEET_ID}
   }
-]
 EOF
 )
         call_api "POST" "/vehicle_update" "$vehicle_register_payload"
@@ -104,12 +98,10 @@ EOF
     local registration_32_updated="大阪ああああああああ|12345|い|1234567890123"
 
     local vehicle_update_payload=$(cat <<EOF
-[
   {
     "short_vehicle_id": ${SHORT_VEHICLE_ID_03},
     "registration": "${registration_32_updated}"
   }
-]
 EOF
 )
     call_api "POST" "/vehicle_update" "$vehicle_update_payload"
@@ -120,12 +112,10 @@ EOF
     log_step $step "drive_update - Link drive (max-length drive_id=36 chars, short_user_id=9 digits)"
 
     local drive_link_payload=$(cat <<EOF
-[
   {
     "drive_id": "${DRIVE_ID_03}",
     "short_user_id": ${SHORT_USER_ID_03}
   }
-]
 EOF
 )
     call_api "POST" "/drive_update" "$drive_link_payload"

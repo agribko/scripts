@@ -31,7 +31,6 @@ run_scenario() {
         log_info "phone_number format: digits only, no hyphens"
 
         local user_register_payload=$(cat <<EOF
-[
   {
     "short_user_id": ${SHORT_USER_ID_04},
     "name_primary": "田中花子",
@@ -41,7 +40,6 @@ run_scenario() {
     "fleet_id": ${FLEET_ID},
     "team_id": ${TEAM_ID}
   }
-]
 EOF
 )
         call_api "POST" "/user_update" "$user_register_payload"
@@ -57,12 +55,10 @@ EOF
     local name_secondary_updated="テスト＠＃＄％アイウ１２３"
 
     local user_update_payload=$(cat <<EOF
-[
   {
     "short_user_id": ${SHORT_USER_ID_04},
     "name_secondary": "${name_secondary_updated}"
   }
-]
 EOF
 )
     call_api "POST" "/user_update" "$user_update_payload"
@@ -76,14 +72,12 @@ EOF
         log_info "tag_mac_address format: XX:XX:XX:XX:XX:XX"
 
         local vehicle_register_payload=$(cat <<EOF
-[
   {
     "short_vehicle_id": ${SHORT_VEHICLE_ID_04},
     "registration": "${registration_format}",
     "tag_mac_address": "${tag_mac_format}",
     "fleet_id": ${FLEET_ID}
   }
-]
 EOF
 )
         call_api "POST" "/vehicle_update" "$vehicle_register_payload"
@@ -99,12 +93,10 @@ EOF
     local registration_updated="大阪|300|い|5678"
 
     local vehicle_update_payload=$(cat <<EOF
-[
   {
     "short_vehicle_id": ${SHORT_VEHICLE_ID_04},
     "registration": "${registration_updated}"
   }
-]
 EOF
 )
     call_api "POST" "/vehicle_update" "$vehicle_update_payload"
@@ -116,12 +108,10 @@ EOF
     log_info "drive_id format: standard UUID with hyphens (8-4-4-4-12)"
 
     local drive_link_payload=$(cat <<EOF
-[
   {
     "drive_id": "${DRIVE_ID_04}",
     "short_user_id": ${SHORT_USER_ID_04}
   }
-]
 EOF
 )
     call_api "POST" "/drive_update" "$drive_link_payload"

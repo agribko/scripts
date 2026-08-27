@@ -20,13 +20,11 @@ run_scenario() {
         log_step $step "vehicle_update - Register vehicle for selection testing"
 
         local vehicle_register_payload=$(cat <<EOF
-[
   {
     "short_vehicle_id": ${SHORT_VEHICLE_ID_05},
     "registration": "品川|500|あ|1234",
     "fleet_id": ${FLEET_ID}
   }
-]
 EOF
 )
         call_api "POST" "/vehicle_update" "$vehicle_register_payload"
@@ -41,12 +39,10 @@ EOF
         log_step $step "vehicle_update - eco_class=${eco_class}"
 
         local payload=$(cat <<EOF
-[
   {
     "short_vehicle_id": ${SHORT_VEHICLE_ID_05},
     "eco_class": "${eco_class}"
   }
-]
 EOF
 )
         call_api "POST" "/vehicle_update" "$payload"
@@ -59,12 +55,10 @@ EOF
         log_step $step "vehicle_update - fuel_type=${fuel_type}"
 
         local payload=$(cat <<EOF
-[
   {
     "short_vehicle_id": ${SHORT_VEHICLE_ID_05},
     "fuel_type": "${fuel_type}"
   }
-]
 EOF
 )
         call_api "POST" "/vehicle_update" "$payload"
