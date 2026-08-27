@@ -29,7 +29,7 @@ run_scenario() {
 ]
 EOF
 )
-        call_api "POST" "/vehicle_update/" "$vehicle_register_payload"
+        call_api "POST" "/vehicle_update" "$vehicle_register_payload"
         check_result $step "vehicle_update (register)" "short_vehicle_id=${SHORT_VEHICLE_ID_05}" || failed=$((failed + 1))
     else
         log_info "Skipping vehicle registration (SKIP_REGISTRATION=true)"
@@ -49,7 +49,7 @@ EOF
 ]
 EOF
 )
-        call_api "POST" "/vehicle_update/" "$payload"
+        call_api "POST" "/vehicle_update" "$payload"
         check_result $step "vehicle_update (eco_class)" "eco_class=${eco_class}" || failed=$((failed + 1))
     done
 
@@ -67,7 +67,7 @@ EOF
 ]
 EOF
 )
-        call_api "POST" "/vehicle_update/" "$payload"
+        call_api "POST" "/vehicle_update" "$payload"
         check_result $step "vehicle_update (fuel_type)" "fuel_type=${fuel_type}" || failed=$((failed + 1))
     done
 

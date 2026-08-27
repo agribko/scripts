@@ -27,7 +27,7 @@ run_scenario() {
 ]
 EOF
 )
-        call_api "POST" "/user_update/" "$user_register_payload"
+        call_api "POST" "/user_update" "$user_register_payload"
         check_result $step "user_update (register)" "short_user_id=${SHORT_USER_ID_01}" || failed=$((failed + 1))
     else
         log_info "Skipping user registration (SKIP_REGISTRATION=true)"
@@ -46,7 +46,7 @@ EOF
 ]
 EOF
 )
-    call_api "POST" "/user_update/" "$user_update_payload"
+    call_api "POST" "/user_update" "$user_update_payload"
     check_result $step "user_update (update)" "short_user_id=${SHORT_USER_ID_01}" || failed=$((failed + 1))
 
     # Step 3: Register vehicle (required fields only)
@@ -64,7 +64,7 @@ EOF
 ]
 EOF
 )
-        call_api "POST" "/vehicle_update/" "$vehicle_register_payload"
+        call_api "POST" "/vehicle_update" "$vehicle_register_payload"
         check_result $step "vehicle_update (register)" "short_vehicle_id=${SHORT_VEHICLE_ID_01}" || failed=$((failed + 1))
     else
         log_info "Skipping vehicle registration (SKIP_REGISTRATION=true)"
@@ -83,7 +83,7 @@ EOF
 ]
 EOF
 )
-    call_api "POST" "/vehicle_update/" "$vehicle_update_payload"
+    call_api "POST" "/vehicle_update" "$vehicle_update_payload"
     check_result $step "vehicle_update (update)" "short_vehicle_id=${SHORT_VEHICLE_ID_01}" || failed=$((failed + 1))
 
     # Step 5: Drive update (link drive to user)
@@ -99,7 +99,7 @@ EOF
 ]
 EOF
 )
-    call_api "POST" "/drive_update/" "$drive_update_payload"
+    call_api "POST" "/drive_update" "$drive_update_payload"
     check_result $step "drive_update" "drive_id=${DRIVE_ID_01}, short_user_id=${SHORT_USER_ID_01}" || failed=$((failed + 1))
 
     return $failed

@@ -44,7 +44,7 @@ run_scenario() {
 ]
 EOF
 )
-        call_api "POST" "/user_update/" "$user_register_payload"
+        call_api "POST" "/user_update" "$user_register_payload"
         check_result $step "user_update (register, char format)" "short_user_id=${SHORT_USER_ID_04}" || failed=$((failed + 1))
     else
         log_info "Skipping user registration (SKIP_REGISTRATION=true)"
@@ -65,7 +65,7 @@ EOF
 ]
 EOF
 )
-    call_api "POST" "/user_update/" "$user_update_payload"
+    call_api "POST" "/user_update" "$user_update_payload"
     check_result $step "user_update (update, char format)" "short_user_id=${SHORT_USER_ID_04}" || failed=$((failed + 1))
 
     # Step 3: Register vehicle with format-correct values
@@ -86,7 +86,7 @@ EOF
 ]
 EOF
 )
-        call_api "POST" "/vehicle_update/" "$vehicle_register_payload"
+        call_api "POST" "/vehicle_update" "$vehicle_register_payload"
         check_result $step "vehicle_update (register, char format)" "short_vehicle_id=${SHORT_VEHICLE_ID_04}" || failed=$((failed + 1))
     else
         log_info "Skipping vehicle registration (SKIP_REGISTRATION=true)"
@@ -107,7 +107,7 @@ EOF
 ]
 EOF
 )
-    call_api "POST" "/vehicle_update/" "$vehicle_update_payload"
+    call_api "POST" "/vehicle_update" "$vehicle_update_payload"
     check_result $step "vehicle_update (update, char format)" "short_vehicle_id=${SHORT_VEHICLE_ID_04}" || failed=$((failed + 1))
 
     # Step 5: Drive update - UUID format drive_id
@@ -124,7 +124,7 @@ EOF
 ]
 EOF
 )
-    call_api "POST" "/drive_update/" "$drive_link_payload"
+    call_api "POST" "/drive_update" "$drive_link_payload"
     check_result $step "drive_update (link, UUID format)" "drive_id=${DRIVE_ID_04}, short_user_id=${SHORT_USER_ID_04}" || failed=$((failed + 1))
 
     return $failed

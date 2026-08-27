@@ -31,7 +31,7 @@ run_scenario() {
 ]
 EOF
 )
-        call_api "POST" "/user_update/" "$user_register_payload"
+        call_api "POST" "/user_update" "$user_register_payload"
         check_result $step "user_update (register, min digits)" "short_user_id=${SHORT_USER_ID_02}" || failed=$((failed + 1))
     else
         log_info "Skipping user registration (SKIP_REGISTRATION=true)"
@@ -50,7 +50,7 @@ EOF
 ]
 EOF
 )
-    call_api "POST" "/user_update/" "$user_update_payload"
+    call_api "POST" "/user_update" "$user_update_payload"
     check_result $step "user_update (update, min digits)" "short_user_id=${SHORT_USER_ID_02}" || failed=$((failed + 1))
 
     # Step 3: Register vehicle with minimum-length short_vehicle_id (9 digits)
@@ -68,7 +68,7 @@ EOF
 ]
 EOF
 )
-        call_api "POST" "/vehicle_update/" "$vehicle_register_payload"
+        call_api "POST" "/vehicle_update" "$vehicle_register_payload"
         check_result $step "vehicle_update (register, min digits)" "short_vehicle_id=${SHORT_VEHICLE_ID_02}" || failed=$((failed + 1))
     else
         log_info "Skipping vehicle registration (SKIP_REGISTRATION=true)"
@@ -87,7 +87,7 @@ EOF
 ]
 EOF
 )
-    call_api "POST" "/vehicle_update/" "$vehicle_update_payload"
+    call_api "POST" "/vehicle_update" "$vehicle_update_payload"
     check_result $step "vehicle_update (update, min digits)" "short_vehicle_id=${SHORT_VEHICLE_ID_02}" || failed=$((failed + 1))
 
     # Step 5: Drive update - link drive to user (36-char drive_id, 9-digit short_user_id)
@@ -103,7 +103,7 @@ EOF
 ]
 EOF
 )
-    call_api "POST" "/drive_update/" "$drive_link_payload"
+    call_api "POST" "/drive_update" "$drive_link_payload"
     check_result $step "drive_update (link, min digits)" "drive_id=${DRIVE_ID_02}, short_user_id=${SHORT_USER_ID_02}" || failed=$((failed + 1))
 
     # Step 6: Drive update - unlink drive (short_user_id=0, min 1 digit per vendor note)
@@ -119,7 +119,7 @@ EOF
 ]
 EOF
 )
-    call_api "POST" "/drive_update/" "$drive_unlink_payload"
+    call_api "POST" "/drive_update" "$drive_unlink_payload"
     check_result $step "drive_update (unlink, min 1 digit)" "drive_id=${DRIVE_ID_02}, short_user_id=0" || failed=$((failed + 1))
 
     return $failed
