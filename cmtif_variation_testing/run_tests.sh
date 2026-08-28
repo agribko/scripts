@@ -100,7 +100,7 @@ check_result() {
     local test_name="$2"
     local identifiers="$3"
 
-    if [ "$HTTP_CODE" = "200" ] && echo "$RESPONSE_BODY" | grep -q '"status":\s*0\|"status": 0'; then
+    if [ "$HTTP_CODE" = "200" ] && echo "$RESPONSE_BODY" | grep -q '"code":\s*0\|"code": 0'; then
         log_pass "${test_name} | ${identifiers}"
         return 0
     else
